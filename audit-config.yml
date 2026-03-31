@@ -1,0 +1,87 @@
+# Auditor Pro - Enterprise Configuration
+# Philosophy: Zero Call-Home | Version: 2.0
+# Hardened for CI/CD Pipeline Integration
+
+version: "2.0"
+
+scanner:
+  project_name: "Auditor-Core-Audit"
+  max_findings: 5000            # Prevents report bloat and memory exhaustion
+  max_file_size: 1048576       # 1MB limit for intake performance (in bytes)
+  scan_tests: false
+  offline_mode: false
+  # --- SCOPE CONTROL ---
+  # Patterns passed directly to fnmatch within the Intake module
+  exclude:
+    - "**/venv/**"
+    - "**/node_modules/**"
+    - "**/testdata/**"
+    - "**/.git/**"
+    - "**/__pycache__/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/fixtures/**"
+    - "**/mocks/**"
+    - "**/*_test.go"
+    
+  # Whitelisted extensions for the Intake collector
+  file_types: 
+    - ".py"
+    - ".sol"
+    - ".js"
+    - ".ts"
+    - ".tf"
+    - ".yaml"
+    - ".yml"
+    - ".sh"
+    - ".env"        
+    - "dockerfile"
+
+# --- DETECTION ENGINES ---
+# Orchestrator toggles for plugin loading
+detectors:
+  ai_logic: false            # Experimental logic engine
+  semgrep_detector: true     # Core static analysis
+  bandit_detector: true      # Python security linter
+  slither_detector: true     # Web3/Solidity security
+  secret_detector: true      # Entropy-based secret scanning
+  gitleaks_detector: true    # Git history secret scanning
+  cicd_analyzer: true        # Pipeline security validator
+  bridge_detector: true      # Proprietary bridge-logic rules
+  iac_scanner: true          # Infrastructure as Code security
+  dependency_scanner: true   # SCA / Vulnerable dependencies
+  license_scanner: true      # Legal/Compliance check
+
+# --- POLICY GATE ---
+# Thresholds for PolicyEngine evaluation
+policy:
+  fail_on_severity: "HIGH"   # Break build if HIGH or CRITICAL issues exist
+  allow_info: false          # Do not bypass INFO findings without audit
+  min_severity: "LOW"     # Ignore findings below this level in the summary
+
+# --- OUTPUT & REPORTING ---
+reporting:
+  output_dir: "reports"
+  formats: ["html", "json", "pdf"]
+  show_remediation: true     # Include fix suggestions in reports
+  include_legal_risks: true  # Toggle for license compliance section
+
+# --- AI ENHANCEMENT ---
+# --- AI ENHANCEMENT ---
+ai:
+  enabled: true
+  mode: "external"
+
+  max_findings_per_scan: 15
+  min_severity_for_ai: "HIGH"
+  batch_size: 5
+  max_tokens_per_request: 4000
+
+  timeout_sec: 60
+  fail_silent: false
+
+  # Configuration for Google Gemini
+  external:
+    provider: "google"
+    model: "gemini-2.5-flash"
+    temperature: 0.2

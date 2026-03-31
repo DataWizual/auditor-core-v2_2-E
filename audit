@@ -1,0 +1,40 @@
+#!/bin/bash
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: ./audit <target_path> [options]"
+    exit 1
+fi
+
+TARGET="$1"
+shift
+
+if [ ! -e "$TARGET" ]; then
+    echo "Error: Target path '$TARGET' does not exist."
+    exit 1
+fi
+
+if [ -d "$PROJECT_ROOT/venv" ]; then
+    source "$PROJECT_ROOT/venv/bin/activate"
+fi
+
+# Clean bytecode cache only in dev mode (when .py source files exist)
+if find "$PROJECT_ROOT" -maxdepth 3 -name "*.py" \
+        -not -path "*/venv/*" \
+        -not -name "__init__.py" \
+        -not -name "build_cython.py" \
+        | grep -q .; then
+    echo -e "\033[0;33m🧹 Deep cleaning bytecode cache...\033[0m"
+    find "$PROJECT_ROOT" -path "$PROJECT_ROOT/venv" -prune -o \
+        -name "*.pyc" -depth -delete 2>/dev/null
+    find "$PROJECT_ROOT" -path "$PROJECT_ROOT/venv" -prune -o \
+        -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+fi
+
+echo -e "\033[0;32m🚀 Starting Auditor Core Professional...\033[0m"
+
+# Entry point launcher — works with both .py (dev) and compiled .so (client)
+LAUNCHER="$PROJECT_ROOT/_launcher.py"
+
+python3 "$LAUNCHER" "$TARGET" --config "$PROJECT_ROOT/audit-config.yml" "$@"
